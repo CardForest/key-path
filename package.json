@@ -1,6 +1,6 @@
 {
   "name": "key-path",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Creates deep property accessors for JavaScript objects.",
   "homepage": "https://github.com/CardForest/key-path",
   "author": {
