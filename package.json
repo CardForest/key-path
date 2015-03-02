@@ -1,0 +1,42 @@
+{
+  "name": "key-path",
+  "version": "0.0.0",
+  "description": "Creates deep property accessors for JavaScript objects.",
+  "homepage": "https://github.com/CardForest/key-path",
+  "author": {
+    "name": "Amit Portnoy",
+    "email": "amit.portnoy@gmail.com",
+    "url": "https://github.com/amitport"
+  },
+  "repository": "amitport/key-path",
+  "license": "BSD",
+  "files": [
+    "index.js"
+  ],
+  "keywords": [
+    "key-path",
+    "deep",
+    "key",
+    "property",
+    "pick",
+    "get",
+    "extract"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "browserify": "^9.0.3",
+    "chai": "^2.1.0",
+    "grunt-cli": "^0.1.13",
+    "grunt-contrib-jshint": "^0.11.0",
+    "grunt-contrib-nodeunit": "^0.4.1",
+    "grunt-contrib-watch": "^0.6.1",
+    "grunt-mocha-cli": "^1.12.0",
+    "jshint-stylish": "^1.0.1",
+    "load-grunt-tasks": "^3.1.0",
+    "time-grunt": "^1.1.0"
+  },
+  "scripts": {
+    "test": "grunt",
+    "browser": "browserify index.js > browser.js"
+  }
+}
