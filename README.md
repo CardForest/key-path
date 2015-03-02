@@ -101,7 +101,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 [npm-image]: https://badge.fury.io/js/key-path.svg
 [npm-url]: https://npmjs.org/package/key-path
-[travis-image]: https://travis-ci.org/amitport/key-path.svg?branch=master
-[travis-url]: https://travis-ci.org/amitport/key-path
-[daviddm-image]: https://david-dm.org/amitport/key-path.svg?theme=shields.io
-[daviddm-url]: https://david-dm.org/amitport/key-path
+[travis-image]: https://travis-ci.org/CardForest/key-path.svg?branch=master
+[travis-url]: https://travis-ci.org/CardForest/key-path
+[daviddm-image]: https://david-dm.org/CardForest/key-path.svg?theme=shields.io
+[daviddm-url]: https://david-dm.org/CardForest/key-path
