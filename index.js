@@ -1,6 +1,8 @@
 /*
  * This code was adapted from https://github.com/Polymer/observe-js/tree/3cf0621767815310f65015b6f6095dc6827e3ce4
  *
+ * Copyright (c) 2015 Amit Portnoy
+ *
  * Including notices as required by the License:
  *
  *   Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
