@@ -99,7 +99,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-[npm-image]: https://badge.fury.io/js/key-path.svg
+[npm-image]: https://img.shields.io/npm/v/key-path.svg?style=flat
 [npm-url]: https://npmjs.org/package/key-path
 [travis-image]: https://travis-ci.org/CardForest/key-path.svg?branch=master
 [travis-url]: https://travis-ci.org/CardForest/key-path
