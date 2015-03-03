@@ -67,9 +67,9 @@ $ npm run browser
 ```
 
 
-## License - BSD
+## License
 
-Copyright © 2015 [Amit Portnoy](https://github.com/amitport)
+Copyright © 2015 [Amit Portnoy](https://github.com/amitport).
 
 Copyright © 2014 The Polymer Project Authors. All rights reserved.
 

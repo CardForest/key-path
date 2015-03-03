@@ -1,36 +1,36 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-/*
- * This code was adapted from https://github.com/Polymer/observe-js/tree/3cf0621767815310f65015b6f6095dc6827e3ce4
+/**
  *
- * Including notices as required by the License:
+ * Copyright (c) 2015 Amit Portnoy.
  *
- *   Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
+ * Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
  *
- *   Redistribution and use in source and binary forms, with or without
- *   modification, are permitted provided that the following conditions are
- *   met:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
  *
- *      * Redistributions of source code must retain the above copyright
- *   notice, this list of conditions and the following disclaimer.
- *      * Redistributions in binary form must reproduce the above
- *   copyright notice, this list of conditions and the following disclaimer
- *   in the documentation and/or other materials provided with the
- *   distribution.
- *      * Neither the name of Google Inc. nor the names of its
- *   contributors may be used to endorse or promote products derived from
- *   this software without specific prior written permission.
+ *    * Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above
+ *    copyright notice, this list of conditions and the following disclaimer
+ *    in the documentation and/or other materials provided with the
+ *    distribution.
+ *    * Neither the name of Google Inc. nor the names of its
+ *    contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
+
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- *   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- *   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- *   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 'use strict';
@@ -364,17 +364,18 @@ Path.prototype = createObject({
     return obj;
   },
 
-  iterateObjects: function(obj, visit) {
-    for (var i = 0; i < this.length; i++) {
-      if (i) {
-        obj = obj[this[i - 1]];
-      }
-      if (!isObject(obj)) {
-        return;
-      }
-      visit(obj, this[i]);
-    }
-  },
+  // un-comment this if/when someone needs it:
+  //iterateObjects: function(obj, visit) {
+  //  for (var i = 0; i < this.length; i++) {
+  //    if (i) {
+  //      obj = obj[this[i - 1]];
+  //    }
+  //    if (!isObject(obj)) {
+  //      return;
+  //    }
+  //    visit(obj, this[i]);
+  //  }
+  //},
 
   compiledGetValueFromFn: function() {
     var str = '';
