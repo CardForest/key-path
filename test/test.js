@@ -182,10 +182,20 @@ describe('key-path node module', function () {
     var emptyPath = KeyPath.get();
     var foo = {};
 
-    assert.equal(null, emptyPath.getValueFrom(null));
-    assert.equal(foo, emptyPath.getValueFrom(foo));
-    assert.equal(3, emptyPath.getValueFrom(3));
-    assert.equal(undefined, KeyPath.get('a').getValueFrom(undefined));
+    assert.equal(emptyPath.getValueFrom(null), null);
+    assert.equal(emptyPath.getValueFrom(foo), foo);
+    assert.equal(emptyPath.getValueFrom(3), 3);
+    assert.equal(KeyPath.get('a').getValueFrom(undefined), undefined);
+  });
+
+  it('Variadic Call', function() {
+    var bar1 = KeyPath.get('foo.bar1');
+    var bar2 = KeyPath.get('foo.bar2');
+
+    var arr = KeyPath.get('foo.bar1', 'foo.bar2');
+
+    assert.strictEqual(arr[0], bar1);
+    assert.strictEqual(arr[1], bar2);
   });
 
   it('Usage Demo', function() {

@@ -2,7 +2,7 @@
 
 > Deep property accessors for JavaScript objects.
 
-Extracted from [Polymer observe-js](https://github.com/Polymer/observe-js) (last sync on [Jan 30 2015](https://github.com/Polymer/observe-js/tree/3cf0621767815310f65015b6f6095dc6827e3ce4)).
+Originally taken from [Polymer observe-js](https://github.com/Polymer/observe-js) (last sync on [Jan 30 2015](https://github.com/Polymer/observe-js/tree/3cf0621767815310f65015b6f6095dc6827e3ce4)).
 
 ## Install
 
@@ -39,7 +39,7 @@ assert  obj.identifier[1]['string with space'] === 'something else'
 
 A path is an ECMAScript expression consisting only of identifiers (`myVal`), member accesses (`foo.bar`) and key lookup with literal values (`arr[0]` `obj['str-value'].bar.baz`).
 
-`KeyPath.get('foo.bar.baz')` returns a Path object which represents the path. Path objects have the following API:
+`KeyPath.get('foo.bar.baz')` returns a KeyPath object which represents the path. KeyPath objects have the following API:
 
 ```JavaScript
 {
@@ -54,7 +54,9 @@ A path is an ECMAScript expression consisting only of identifiers (`myVal`), mem
 }
 ```
 
-KeyPath objects are interned (e.g. `assert(KeyPath.get('foo.bar.baz') === KeyPath.get('foo.bar.baz'));`) and are used internally to avoid excessive parsing of path strings. Observers which take path strings as arguments will also accept Path objects.
+KeyPath objects are interned (e.g., `assert(KeyPath.get('foo.bar.baz') === KeyPath.get('foo.bar.baz'));`) and are used internally to avoid excessive parsing of path strings. Observers which take path strings as arguments will also accept Path objects.
+
+`KeyPath.get` supports variadic calls. That is, if you call it with a few paths (e.g., `KeyPath.get('foo.bar1', 'foo.bar2')`) you will receive an array of KeyPath objects. 
 
 ## Development
 
