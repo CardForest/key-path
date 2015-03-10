@@ -56,7 +56,7 @@ A path is an ECMAScript expression consisting only of identifiers (`myVal`), mem
 
 KeyPath objects are interned (e.g., `assert(KeyPath.get('foo.bar.baz') === KeyPath.get('foo.bar.baz'));`) and are used internally to avoid excessive parsing of path strings. Observers which take path strings as arguments will also accept Path objects.
 
-`KeyPath.get` supports variadic calls. That is, if you call it with a few paths (e.g., `KeyPath.get('foo.bar1', 'foo.bar2')`) you will receive an array of KeyPath objects. 
+`KeyPath.getAll` can be used for making a variadic call to `KeyPath.get`. That is, if you call it with a few paths (e.g., `KeyPath.getAll('foo.bar1', 'foo.bar2')`) you will receive an array of KeyPath objects. 
 
 ## Development
 

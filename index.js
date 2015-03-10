@@ -325,15 +325,13 @@ function getPath(pathString) {
   return path;
 }
 
-Path.get = function() {
-  if (arguments.length >= 2) {
-    // support variadic call
-    return Array.prototype.slice.call(arguments).map(function(p) {
-      return getPath(p);
-    });
-  } else {
-    return getPath.apply(Path, arguments);
-  }
+Path.get = getPath;
+
+// variadic call to Path.get
+Path.getAll = function() {
+  return Array.prototype.slice.call(arguments).map(function(p) {
+    return getPath(p);
+  });
 };
 
 function formatAccessor(key) {

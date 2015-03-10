@@ -36,7 +36,6 @@
 
 var assert = require('chai').assert;
 var KeyPath = require('../');
-
 function assertPath(pathString, expectKeys, expectSerialized) {
   var path = KeyPath.get(pathString);
   if (!expectKeys) {
@@ -192,7 +191,7 @@ describe('key-path node module', function () {
     var bar1 = KeyPath.get('foo.bar1');
     var bar2 = KeyPath.get('foo.bar2');
 
-    var arr = KeyPath.get('foo.bar1', 'foo.bar2');
+    var arr = KeyPath.getAll('foo.bar1', 'foo.bar2');
 
     assert.strictEqual(arr[0], bar1);
     assert.strictEqual(arr[1], bar2);
