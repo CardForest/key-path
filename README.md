@@ -2,7 +2,7 @@
 
 > Deep property accessors for JavaScript objects.
 
-Originally taken from [Polymer observe-js](https://github.com/Polymer/observe-js) (last sync on [Jan 30 2015](https://github.com/Polymer/observe-js/tree/3cf0621767815310f65015b6f6095dc6827e3ce4)).
+Originally taken from [Polymer observe-js](https://github.com/Polymer/observe-js)
 
 ## Install
 
