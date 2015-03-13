@@ -298,14 +298,22 @@ function getPath(pathString) {
     return pathString;
   }
 
-  if (pathString == null || pathString.length == 0) { // jshint ignore:line
+  if (pathString == null || pathString.length === 0) {
     pathString = '';
   }
 
   if (typeof pathString != 'string') { // jshint ignore:line
     if (isIndex(pathString.length)) {
       // Constructed with array-like (pre-parsed) keys
-      return new Path(pathString, constructorIsPrivate);
+      var newPath = new Path(pathString, constructorIsPrivate);
+      var newPathString = newPath.toString();
+      var cachedPath = pathCache[newPathString];
+      if (cachedPath) {
+        return cachedPath;
+      }
+
+      pathCache[newPathString] = newPath;
+      return newPath;
     }
 
     pathString = String(pathString);
@@ -327,6 +335,13 @@ function getPath(pathString) {
 }
 
 Path.get = getPath;
+
+// variadic call to Path.get
+Path.getAll = function() {
+  return Array.prototype.slice.call(arguments).map(function(p) {
+    return getPath(p);
+  });
+};
 
 function formatAccessor(key) {
   if (isIndex(key)) {
