@@ -114,11 +114,13 @@ describe('key-path node module', function () {
   it('Paths are interned', function() {
     var p = KeyPath.get('foo.bar');
     var p2 = KeyPath.get('foo.bar');
+    var p3 = KeyPath.get(['foo', 'bar']);
     assert.strictEqual(p, p2);
+    assert.strictEqual(p3, p2);
 
-    var p3 = KeyPath.get('');
     var p4 = KeyPath.get('');
-    assert.strictEqual(p3, p4);
+    var p5 = KeyPath.get('');
+    assert.strictEqual(p4, p5);
   });
 
   it('null is empty path', function() {
@@ -142,39 +144,39 @@ describe('key-path node module', function () {
     var p2 = KeyPath.get('a.b');
     var p3 = KeyPath.get('a.b.c');
 
-    assert.strictEqual(obj.a, p1.getValueFrom(obj));
-    assert.strictEqual(obj.a.b, p2.getValueFrom(obj));
-    assert.strictEqual(1, p3.getValueFrom(obj));
+    assert.strictEqual(p1.getValueFrom(obj), obj.a);
+    assert.strictEqual(p2.getValueFrom(obj), obj.a.b);
+    assert.strictEqual(p3.getValueFrom(obj), 1);
 
     obj.a.b.c = 2;
-    assert.strictEqual(2, p3.getValueFrom(obj));
+    assert.strictEqual(p3.getValueFrom(obj), 2);
 
     obj.a.b = {
       c: 3
     };
-    assert.strictEqual(3, p3.getValueFrom(obj));
+    assert.strictEqual(p3.getValueFrom(obj), 3);
 
     obj.a = {
       b: 4
     };
-    assert.strictEqual(undefined, p3.getValueFrom(obj));
-    assert.strictEqual(4, p2.getValueFrom(obj));
+    assert.strictEqual(p3.getValueFrom(obj), undefined);
+    assert.strictEqual(p2.getValueFrom(obj), 4);
   });
 
   it('KeyPath.setValueFrom', function() {
     var obj = {};
 
     KeyPath.get('foo').setValueFrom(obj, 3);
-    assert.equal(3, obj.foo);
+    assert.equal(obj.foo, 3);
 
     var bar = { baz: 3 };
 
     KeyPath.get('bar').setValueFrom(obj, bar);
-    assert.equal(bar, obj.bar);
+    assert.equal(obj.bar, bar);
 
     var p = KeyPath.get('bar.baz.bat');
     p.setValueFrom(obj, 'not here');
-    assert.equal(undefined, p.getValueFrom(obj));
+    assert.equal(p.getValueFrom(obj), undefined);
   });
 
   it('Degenerate Values', function() {
@@ -208,12 +210,12 @@ describe('key-path node module', function () {
     };
 
     var kp = KeyPath.get(['identifier', 1, 'string with space']);
-    assert.equal('you got me!', kp.getValueFrom(obj));
+    assert.equal(kp.getValueFrom(obj), 'you got me!');
 
     kp = KeyPath.get("identifier[1]['string with space']");
-    assert.equal('you got me!', kp.getValueFrom(obj));
+    assert.equal(kp.getValueFrom(obj), 'you got me!');
 
     kp.setValueFrom(obj, 'something else');
-    assert.equal('something else', obj.identifier[1]['string with space']);
+    assert.equal(obj.identifier[1]['string with space'], 'something else');
   });
 });
