@@ -1,6 +1,4 @@
-#  [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Dependency Status][daviddm-image]][daviddm-url]
-
-> Deep property accessors for JavaScript objects.
+# Deep property accessors for JavaScript objects.
 
 Originally taken from [Polymer observe-js](https://github.com/Polymer/observe-js)
 

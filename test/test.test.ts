@@ -1,68 +1,36 @@
-/*
- * This code was adapted from https://github.com/Polymer/observe-js/tree/3cf0621767815310f65015b6f6095dc6827e3ce4
- *
- * Including notices as required by the License:
- *
- *   Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
- *
- *   Redistribution and use in source and binary forms, with or without
- *   modification, are permitted provided that the following conditions are
- *   met:
- *
- *      * Redistributions of source code must retain the above copyright
- *   notice, this list of conditions and the following disclaimer.
- *      * Redistributions in binary form must reproduce the above
- *   copyright notice, this list of conditions and the following disclaimer
- *   in the documentation and/or other materials provided with the
- *   distribution.
- *      * Neither the name of Google Inc. nor the names of its
- *   contributors may be used to endorse or promote products derived from
- *   this software without specific prior written permission.
- *
- *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- *   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- *   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- *   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+import { assert, describe, it } from 'vitest';
+import KeyPath from '../index';
 
-'use strict';
-
-var assert = require('chai').assert;
-var KeyPath = require('../');
-function assertPath(pathString, expectKeys, expectSerialized) {
+function assertPath(pathString: any, expectKeys?: string[], expectSerialized?: string) {
   var path = KeyPath.get(pathString);
   if (!expectKeys) {
-    assert.isFalse(path.valid);
+    if (path.valid) {
+      assert.isFalse(path.valid, `Expected invalid path for "${pathString}"`);
+    }
     return;
   }
 
-  assert.deepEqual(Array.prototype.slice.apply(path), expectKeys);
+  assert.deepEqual(Array.from(path), expectKeys);
   assert.strictEqual(path.toString(), expectSerialized);
 }
 
-function assertInvalidPath(pathString) {
+function assertInvalidPath(pathString: any) {
   assertPath(pathString);
 }
 
 describe('key-path node module', function () {
-  it('constructor throws', function() {
-    assert.throws(function() {
-      new KeyPath('foo');
+  it('constructor throws', function () {
+    assert.throws(function () {
+      // @ts-ignore
+      new KeyPath(['foo'], null);
     });
   });
 
-  it('path validity', function() {
+  it('path validity', function () {
     // invalid path get value is always undefined
     var p = KeyPath.get('a b');
     assert.isFalse(p.valid);
-    assert.isUndefined(p.getValueFrom({ a: { b: 2 }}));
+    assert.isUndefined(p.getValueFrom({ a: { b: 2 } }));
 
     assertPath('', [], '');
     assertPath(' ', [], '');
@@ -88,8 +56,12 @@ describe('key-path node module', function () {
     assertPath(['a', 'b'], ['a', 'b'], 'a.b');
     assertPath([''], [''], '[""]');
 
-    function Foo(val) { this.val = val; }
-    Foo.prototype.toString = function() { return 'Foo' + this.val; };
+    class Foo {
+      val: string;
+      constructor(val: string) { this.val = val; }
+      toString() { return 'Foo' + this.val; }
+    }
+
     assertPath([new Foo('a'), new Foo('b')], ['Fooa', 'Foob'], 'Fooa.Foob');
 
     assertInvalidPath('.');
@@ -111,7 +83,7 @@ describe('key-path node module', function () {
     assertInvalidPath("foo['bar]");
   });
 
-  it('Paths are interned', function() {
+  it('Paths are interned', function () {
     var p = KeyPath.get('foo.bar');
     var p2 = KeyPath.get('foo.bar');
     var p3 = KeyPath.get(['foo', 'bar']);
@@ -123,16 +95,16 @@ describe('key-path node module', function () {
     assert.strictEqual(p4, p5);
   });
 
-  it('null is empty path', function() {
+  it('null is empty path', function () {
     assert.strictEqual(KeyPath.get(''), KeyPath.get(null));
   });
 
-  it('undefined is empty path', function() {
+  it('undefined is empty path', function () {
     assert.strictEqual(KeyPath.get(undefined), KeyPath.get(null));
   });
 
-  it('KeyPath.getValueFrom', function() {
-    var obj = {
+  it('KeyPath.getValueFrom', function () {
+    var obj: any = {
       a: {
         b: {
           c: 1
@@ -163,8 +135,8 @@ describe('key-path node module', function () {
     assert.strictEqual(p2.getValueFrom(obj), 4);
   });
 
-  it('KeyPath.setValueFrom', function() {
-    var obj = {};
+  it('KeyPath.setValueFrom', function () {
+    var obj: any = {};
 
     KeyPath.get('foo').setValueFrom(obj, 3);
     assert.equal(obj.foo, 3);
@@ -179,7 +151,7 @@ describe('key-path node module', function () {
     assert.equal(p.getValueFrom(obj), undefined);
   });
 
-  it('Degenerate Values', function() {
+  it('Degenerate Values', function () {
     var emptyPath = KeyPath.get();
     var foo = {};
 
@@ -189,7 +161,7 @@ describe('key-path node module', function () {
     assert.equal(KeyPath.get('a').getValueFrom(undefined), undefined);
   });
 
-  it('Variadic Call', function() {
+  it('Variadic Call', function () {
     var bar1 = KeyPath.get('foo.bar1');
     var bar2 = KeyPath.get('foo.bar2');
 
@@ -199,8 +171,8 @@ describe('key-path node module', function () {
     assert.strictEqual(arr[1], bar2);
   });
 
-  it('Usage Demo', function() {
-    var obj = {
+  it('Usage Demo', function () {
+    var obj: any = {
       identifier: [
         'some value',
         {
