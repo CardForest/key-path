@@ -161,4 +161,26 @@ function assertInvalidPath(pathString) {
         kp.setValueFrom(obj, 'something else');
         vitest_1.assert.equal(obj.identifier[1]['string with space'], 'something else');
     });
+    (0, vitest_1.it)('compiled getter does not execute code in keys', function () {
+        var g = globalThis;
+        delete g.__kpInjected;
+        // string path: backslash before the quote used to close the generated string literal
+        var p1 = index_1.default.get("['\\\"+(globalThis.__kpInjected=1)];//']");
+        vitest_1.assert.isTrue(p1.valid);
+        vitest_1.assert.isUndefined(p1.getValueFrom({ a: 1 }));
+        vitest_1.assert.isUndefined(g.__kpInjected);
+        // array path: bypasses the parser
+        var p2 = index_1.default.get(['\\"]+(globalThis.__kpInjected=2)//']);
+        vitest_1.assert.isUndefined(p2.getValueFrom({ a: 1 }));
+        vitest_1.assert.isUndefined(g.__kpInjected);
+    });
+    (0, vitest_1.it)('compiled getter matches property access for special-character keys', function () {
+        var keys = ['a\\b', 'a"b', "a'b", 'a\nb', String.fromCharCode(0x2028), '0x10', '0', '16'];
+        var obj = { 16: 'sixteen' };
+        keys.forEach(function (k, i) { obj[k] = i; });
+        keys.forEach(function (k) {
+            vitest_1.assert.strictEqual(index_1.default.get([k]).getValueFrom(obj), obj[k], JSON.stringify(k));
+            vitest_1.assert.strictEqual(index_1.default.get(['x', k]).getValueFrom({ x: obj }), obj[k], 'nested ' + JSON.stringify(k));
+        });
+    });
 });

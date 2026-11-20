@@ -311,12 +311,12 @@ class Path extends Array {
         var key;
         for (; i < (this.length - 1); i++) {
             key = this[i];
-            pathString += isIdent(key) ? '.' + key : formatAccessor(key);
+            pathString += isIdent(key) ? '.' + key : formatCompiledAccessor(key);
             str += ' &&\n     ' + pathString + ' != null';
         }
         str += ')\n';
         key = this[i];
-        pathString += isIdent(key) ? '.' + key : formatAccessor(key);
+        pathString += isIdent(key) ? '.' + key : formatCompiledAccessor(key);
         str += '  return ' + pathString + ';\nelse\n  return undefined;';
         return new Function('obj', str);
     }
@@ -349,5 +349,13 @@ function formatAccessor(key) {
     else {
         return '["' + key.replace(/"/g, '\\"') + '"]';
     }
+}
+// Used only when generating source for compiledGetValueFromFn. JSON.stringify
+// produces a valid JS string literal for any key (backslashes, quotes, line
+// terminators); U+2028/U+2029 are escaped for pre-ES2019 engines.
+function formatCompiledAccessor(key) {
+    return '[' + JSON.stringify(key)
+        .replace(/\u2028/g, '\\u2028')
+        .replace(/\u2029/g, '\\u2029') + ']';
 }
 module.exports = Path;
