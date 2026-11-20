@@ -92,6 +92,73 @@ describe('key-path node module', function () {
     assert.strictEqual(p4, p5);
   });
 
+  it('caches equivalent spellings by parsed keys', function () {
+    const path = KeyPath.get('canonical.id');
+    assert.strictEqual(KeyPath.get("canonical['id']"), path);
+    assert.strictEqual(KeyPath.get(' canonical . id '), path);
+    assert.strictEqual(KeyPath.get(['canonical', 'id']), path);
+    assert.strictEqual(KeyPath.get(' \t '), KeyPath.get(''));
+    assert.isFalse(KeyPath.get("canonical.['id']").valid);
+  });
+
+  it('does not use serialized array keys to bypass string parsing', function () {
+    const path = KeyPath.get(['0x10']);
+    assert.isTrue(path.valid);
+    assert.strictEqual(path.getValueFrom({ '0x10': 42 }), 42);
+    assert.isFalse(KeyPath.get('[0x10]').valid);
+    assert.isFalse(KeyPath.get('[0x10]').equals(path));
+    assert.notStrictEqual(KeyPath.get(['a.b']), KeyPath.get(['a', 'b']));
+  });
+
+  it('evicts the least recently used canonical path', function () {
+    const previousLimit = KeyPath.cacheLimit;
+    try {
+      KeyPath.cacheLimit = 0;
+      KeyPath.cacheLimit = 2;
+      const first = KeyPath.get('lru.first');
+      const second = KeyPath.get('lru.second');
+      assert.strictEqual(KeyPath.get("lru['first']"), first);
+      KeyPath.get('lru.third');
+      assert.strictEqual(KeyPath.get(['lru', 'first']), first);
+      const replacement = KeyPath.get('lru.second');
+      assert.notStrictEqual(replacement, second);
+      assert.isTrue(replacement.equals(second));
+      assert.strictEqual(second.getValueFrom({ lru: { second: 42 } }), 42);
+    } finally {
+      KeyPath.cacheLimit = previousLimit;
+    }
+  });
+
+  it('immediately shrinks the cache and supports disabling it', function () {
+    const previousLimit = KeyPath.cacheLimit;
+    try {
+      KeyPath.cacheLimit = 0;
+      KeyPath.cacheLimit = 3;
+      const first = KeyPath.get('resize.first');
+      KeyPath.get('resize.second');
+      const last = KeyPath.get('resize.last');
+      KeyPath.cacheLimit = 1;
+      assert.strictEqual(KeyPath.get('resize.last'), last);
+      assert.notStrictEqual(KeyPath.get('resize.first'), first);
+
+      KeyPath.cacheLimit = 0;
+      const path = KeyPath.get('disabled.path');
+      const replacement = KeyPath.get(['disabled', 'path']);
+      assert.notStrictEqual(path, replacement);
+      assert.isTrue(path.equals(replacement));
+      assert.isFalse(path.equals(KeyPath.get('disabled')));
+      assert.isFalse(path.equals(KeyPath.get('disabled.other')));
+      assert.isFalse(KeyPath.get('[').equals(KeyPath.get('')));
+      assert.isTrue(KeyPath.get('[').equals(KeyPath.get('.')));
+
+      for (const limit of [-1, 1.5, NaN, Infinity]) {
+        assert.throws(() => { KeyPath.cacheLimit = limit; }, RangeError);
+      }
+    } finally {
+      KeyPath.cacheLimit = previousLimit;
+    }
+  });
+
   it('null is empty path', function () {
     assert.strictEqual(KeyPath.get(''), KeyPath.get(null));
   });

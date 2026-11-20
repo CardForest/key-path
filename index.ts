@@ -271,6 +271,18 @@ class Path extends Array<string> {
     return Array;
   }
 
+  static get cacheLimit(): number {
+    return cacheLimit;
+  }
+
+  static set cacheLimit(limit: number) {
+    if (!Number.isSafeInteger(limit) || limit < 0) {
+      throw new RangeError('cacheLimit must be a non-negative safe integer');
+    }
+    cacheLimit = limit;
+    trimPathCache();
+  }
+
   static get(input?: unknown): Path {
     if (input instanceof Path) {
       return input;
@@ -280,35 +292,43 @@ class Path extends Array<string> {
       input = '';
     }
 
-    if (typeof input !== 'string' && isArrayLike(input)) {
-      const newPath = new Path(Array.from(input), constructorIsPrivate);
-      const newPathString = newPath.toString();
-      const cachedPath = pathCache.get(newPathString);
-      if (cachedPath) {
-        return cachedPath;
-      }
-      pathCache.set(newPathString, newPath);
-      return newPath;
-    }
-
-    const pathString = String(input);
-    let path = pathCache.get(pathString);
-    if (path) {
-      return path;
-    }
-
-    const parts = parsePath(pathString);
+    const parts = typeof input !== 'string' && isArrayLike(input)
+      ? Array.from(input, String)
+      : parsePath(String(input));
     if (!parts) {
       return invalidPath;
     }
 
-    path = new Path(parts, constructorIsPrivate);
-    pathCache.set(pathString, path);
+    const canonicalKey = JSON.stringify(parts);
+    const cachedPath = pathCache.get(canonicalKey);
+    if (cachedPath) {
+      pathCache.delete(canonicalKey);
+      pathCache.set(canonicalKey, cachedPath);
+      return cachedPath;
+    }
+
+    const path = new Path(parts, constructorIsPrivate);
+    if (cacheLimit > 0) {
+      pathCache.set(canonicalKey, path);
+      trimPathCache();
+    }
     return path;
   }
 
   static getAll(...args: unknown[]): Path[] {
     return args.map(p => Path.get(p));
+  }
+
+  equals(other: Path): boolean {
+    if (this.valid !== other.valid || this.length !== other.length) {
+      return false;
+    }
+    for (let i = 0; i < this.length; i++) {
+      if (this[i] !== other[i]) {
+        return false;
+      }
+    }
+    return true;
   }
 
   override toString(): string {
@@ -380,6 +400,16 @@ class Path extends Array<string> {
 }
 
 const pathCache = new Map<string, Path>();
+let cacheLimit = 100_000;
+
+function trimPathCache(): void {
+  for (const key of pathCache.keys()) {
+    if (pathCache.size <= cacheLimit) {
+      break;
+    }
+    pathCache.delete(key);
+  }
+}
 
 const invalidPath = new Path([], constructorIsPrivate);
 invalidPath.valid = false;

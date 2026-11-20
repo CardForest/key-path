@@ -53,7 +53,9 @@ A path is an ECMAScript expression consisting only of identifiers (`myVal`), mem
 }
 ```
 
-- KeyPath objects are interned (e.g., `assert(KeyPath.get('foo.bar.baz') === KeyPath.get('foo.bar.baz'));`).
+- Equivalent valid paths share an instance while cached, including dot notation,
+  quoted keys, whitespace variants, and arrays of keys. Strings are always parsed
+  before cache lookup, so invalid syntax never becomes valid through caching.
 
 - `KeyPath.getAll` can be used for making a variadic call to `KeyPath.get`. That is, if you call it with a few paths (e.g., `KeyPath.getAll('foo.bar1', 'foo.bar2')`) you will receive an array of KeyPath objects. 
 
@@ -67,6 +69,29 @@ A path is an ECMAScript expression consisting only of identifiers (`myVal`), mem
   or `Array.prototype`. Inherited traversal, custom prototypes, and
   prototype-related key names remain supported. This is a targeted safeguard,
   not comprehensive protection against every prototype-related mutation.
+
+## Caching and equality
+
+Paths use a least-recently-used (LRU) cache keyed by their parsed segments.
+The default limit is 100,000 paths. Configure it with:
+
+```js
+KeyPath.cacheLimit = 10_000;
+```
+
+The limit must be a non-negative safe integer. Lowering it immediately evicts
+the least recently used entries; setting it to `0` clears and disables caching.
+Cache hits refresh recency, including lookups using equivalent path spellings.
+This is an entry-count limit, not a byte-size limit.
+
+Evicted paths remain usable, but later lookups can return different instances.
+Use `equals` instead of relying on permanent `===` identity:
+
+```js
+const first = KeyPath.get('items[0].name');
+const second = KeyPath.get(['items', 0, 'name']);
+first.equals(second); // compares validity and keys
+```
 
 ## TypeScript
 
