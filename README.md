@@ -100,6 +100,33 @@ $ npm run build
 Generated files in `dist` are ignored by Git. Build output and declarations
 are included in the npm package; `npm publish` runs tests and builds them first.
 
+## Publishing
+
+Publishing a stable GitHub release runs `.github/workflows/publish.yml` and
+publishes to npm's `latest` tag. Drafts and prereleases do not publish.
+The release tag must match the version in `package.json`, with an optional `v`
+prefix (for example, `v0.4.0`). Publishing runs type checking, tests, and the build.
+
+Configure an npm trusted publisher in the
+[key-path package settings](https://www.npmjs.com/package/key-path/access):
+
+- Provider: GitHub Actions
+- Organization or user: `CardForest`
+- Repository: `key-path`
+- Workflow filename: `publish.yml`
+- Environment name: leave empty
+- Allowed actions: enable direct publishing with `npm publish`
+
+No npm token or GitHub secret is required. Configure the trusted publisher
+shortly before the first release: new configurations expire if they are not used
+successfully within two days. See the
+[npm trusted publishing documentation](https://docs.npmjs.com/trusted-publishers/).
+
+For each release, update the package version and lockfile (for example,
+`npm version patch --no-git-tag-version`), commit and push the changes, then
+publish a GitHub release targeting that commit with the matching tag.
+The workflow requires GitHub Actions to be enabled for this repository.
+
 ## Contributors
 
 Thanks to [@CXu0630](https://github.com/CXu0630) for fixing special-character

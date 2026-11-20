@@ -10,11 +10,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/CardForest/key-path.git"
+    "url": "git+https://github.com/CardForest/key-path.git"
   },
   "license": "BSD",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
   "files": [
     "dist/index.js",
     "dist/index.d.ts"
@@ -32,7 +35,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "build": "tsc",
-    "prepublishOnly": "npm test && npm run build"
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "devDependencies": {
     "@types/node": "^25.0.7",
