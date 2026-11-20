@@ -62,10 +62,15 @@ A path is an ECMAScript expression consisting only of identifiers (`myVal`), mem
 # run tests
 $ npm test
 
-# creates browser.js using browserify
-$ npm run browser
+# build the CommonJS module and TypeScript declarations in dist
+$ npm run build
 ```
 
+## Contributors
+
+Thanks to [@CXu0630](https://github.com/CXu0630) for fixing special-character
+escaping in compiled getters and adding regression tests
+([#3](https://github.com/CardForest/key-path/pull/3)).
 
 ## License
 
