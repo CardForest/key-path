@@ -1,12 +1,10 @@
-import { assert, describe, it } from 'vitest';
+import { assert, describe, it, vi } from 'vitest';
 import KeyPath from '../index';
 
-function assertPath(pathString: any, expectKeys?: string[], expectSerialized?: string) {
-  var path = KeyPath.get(pathString);
+function assertPath(pathString: unknown, expectKeys?: string[], expectSerialized?: string) {
+  const path = KeyPath.get(pathString);
   if (!expectKeys) {
-    if (path.valid) {
-      assert.isFalse(path.valid, `Expected invalid path for "${pathString}"`);
-    }
+    assert.isFalse(path.valid, `Expected invalid path for "${pathString}"`);
     return;
   }
 
@@ -14,14 +12,13 @@ function assertPath(pathString: any, expectKeys?: string[], expectSerialized?: s
   assert.strictEqual(path.toString(), expectSerialized);
 }
 
-function assertInvalidPath(pathString: any) {
+function assertInvalidPath(pathString: unknown) {
   assertPath(pathString);
 }
 
 describe('key-path node module', function () {
   it('constructor throws', function () {
     assert.throws(function () {
-      // @ts-ignore
       new KeyPath(['foo'], null);
     });
   });
@@ -216,5 +213,66 @@ describe('key-path node module', function () {
       assert.strictEqual(KeyPath.get([k]).getValueFrom(obj), obj[k], JSON.stringify(k));
       assert.strictEqual(KeyPath.get(['x', k]).getValueFrom({ x: obj }), obj[k], 'nested ' + JSON.stringify(k));
     });
+  });
+
+  it('interns keys that match Object prototype properties', function () {
+    for (const key of ['constructor', 'toString', 'hasOwnProperty', '__proto__']) {
+      const path = KeyPath.get(key);
+      const object = { [key]: 'expected' };
+      assert.instanceOf(path, KeyPath);
+      assert.strictEqual(path.getValueFrom(object), 'expected');
+      assert.strictEqual(KeyPath.get([key]), path);
+    }
+  });
+
+  it('accepts readonly and array-like keys', function () {
+    const parts = ['root', 0, 'leaf'] as const;
+    const path = KeyPath.get(parts);
+    assert.strictEqual(KeyPath.get({ 0: 'root', 1: 0, 2: 'leaf', length: 3 }), path);
+    assert.strictEqual(KeyPath.get({ 0: 'root', 1: 0, 2: 'leaf', length: '3' }), path);
+    assert.strictEqual(KeyPath.getAll(parts, path)[0], path);
+    assert.strictEqual(path.getValueFrom({ root: [{ leaf: 42 }] }), 42);
+  });
+
+  it('supports inherited array operations without constructing a Path', function () {
+    const path = KeyPath.get('species.root.leaf');
+    assert.deepEqual(path.map(key => key.toUpperCase()), ['SPECIES', 'ROOT', 'LEAF']);
+    assert.deepEqual(path.slice(1), ['root', 'leaf']);
+    assert.deepEqual(path.filter(key => key !== 'root'), ['species', 'leaf']);
+    assert.isFalse(path.slice() instanceof KeyPath);
+    assert.strictEqual(KeyPath.get('species.root.leaf'), path);
+  });
+
+  it('compiles an empty path as the identity getter', function () {
+    const getter = KeyPath.get().compiledGetValueFromFn();
+    const object = {};
+    assert.strictEqual(getter(object), object);
+    assert.strictEqual(getter(null), null);
+    assert.strictEqual(getter(42), 42);
+  });
+
+  it('uses the interpreted getter when code generation is unavailable', async function () {
+    vi.resetModules();
+    vi.stubGlobal('Function', function () {
+      throw new EvalError('Code generation is disabled');
+    });
+    try {
+      const { default: SafePath } = await import('../index');
+      const key = 'a\\b\n"';
+      const path = SafePath.get(['root', key]);
+      const object = { root: { [key]: 42 } };
+      assert.strictEqual(path.getValueFrom, SafePath.prototype.getValueFrom);
+      assert.strictEqual(path.getValueFrom(object), 42);
+      assert.isUndefined(path.getValueFrom({ root: null }));
+      assert.strictEqual(SafePath.get('length').getValueFrom('abc'), 3);
+      assert.isTrue(path.setValueFrom(object, 7));
+      assert.strictEqual(object.root[key], 7);
+      assert.isFalse(path.setValueFrom({ root: null }, 7));
+      assert.isFalse(SafePath.get().setValueFrom(object, 7));
+      assert.isUndefined(SafePath.get('a[').getValueFrom(object));
+    } finally {
+      vi.unstubAllGlobals();
+      vi.resetModules();
+    }
   });
 });

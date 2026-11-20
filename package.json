@@ -30,6 +30,7 @@
   ],
   "scripts": {
     "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "build": "tsc",
     "prepublishOnly": "npm test && npm run build"
   },

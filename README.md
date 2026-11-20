@@ -12,25 +12,26 @@ $ npm install --save key-path
 ## Usage
 
 ```js
-var KeyPath = require('key-path');
+const assert = require('node:assert/strict');
+const KeyPath = require('key-path');
 
-var kp = KeyPath.get(['identifier', 1, 'string with space']);
+let kp = KeyPath.get(['identifier', 1, 'string with space']);
 // OR
-var kp = KeyPath.get("identifier[1]['string with space']");
+kp = KeyPath.get("identifier[1]['string with space']");
 
-var obj = {
+const obj = {
   identifier: [
     'some value',
     {
       'string with space': 'you got me!'
     }
   ]
-}
+};
 
-assert kp.getValueFrom(obj) === 'you got me!'
+assert.equal(kp.getValueFrom(obj), 'you got me!');
 
 kp.setValueFrom(obj, 'something else');
-assert  obj.identifier[1]['string with space'] === 'something else'
+assert.equal(obj.identifier[1]['string with space'], 'something else');
 ```
 
 ## KeyPath Objects
@@ -56,15 +57,43 @@ A path is an ECMAScript expression consisting only of identifiers (`myVal`), mem
 
 - `KeyPath.getAll` can be used for making a variadic call to `KeyPath.get`. That is, if you call it with a few paths (e.g., `KeyPath.getAll('foo.bar1', 'foo.bar2')`) you will receive an array of KeyPath objects. 
 
+- Paths extend `Array<string>`. Array operations such as `map`, `filter`, and
+  `slice` return ordinary arrays.
+
+- When code generation is unavailable (for example, under a strict Content
+  Security Policy), getters use ordinary property traversal.
+
+## TypeScript
+
+The package includes declarations and retains its CommonJS export:
+
+```ts
+import KeyPath = require('key-path');
+
+const parts = ['items', 0, 'name'] as const;
+const path = KeyPath.get(parts);
+const value = path.getValueFrom({ items: [{ name: 'example' }] });
+```
+
+Readonly arrays and array-like objects are accepted as pre-parsed keys.
+Getter results remain dynamically typed; the path does not infer the object's
+property types.
+
 ## Development
 
 ```sh
 # run tests
 $ npm test
 
+# type-check the library and tests without emitting files
+$ npm run typecheck
+
 # build the CommonJS module and TypeScript declarations in dist
 $ npm run build
 ```
+
+Generated files in `dist` are ignored by Git. Build output and declarations
+are included in the npm package; `npm publish` runs tests and builds them first.
 
 ## Contributors
 

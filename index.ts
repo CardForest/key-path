@@ -32,10 +32,7 @@
  *
  */
 
-'use strict';
-
-// Declare chrome global
-declare var chrome: any;
+declare const chrome: { app?: { runtime?: unknown } } | undefined;
 
 function detectEval(): boolean {
   // Don't test for eval if we're running in a Chrome App environment.
@@ -47,48 +44,55 @@ function detectEval(): boolean {
   // Firefox OS Apps do not allow eval. This feature detection is very hacky
   // but even if some other platform adds support for this function this code
   // will continue to work.
-  if (typeof navigator != 'undefined' && (navigator as any).getDeviceStorage) {
+  if (typeof navigator !== 'undefined' && 'getDeviceStorage' in navigator && navigator.getDeviceStorage) {
     return false;
   }
 
   try {
-    var f = new Function('', 'return true;');
-    return f();
-  } catch (ex) {
+    return new Function('return true;')();
+  } catch {
     return false;
   }
 }
 
-var hasEval = detectEval();
+const hasEval = detectEval();
 
-function isIndex(s: any): boolean {
-  return +s === s >>> 0 && s !== '';
+function isIndex(value: unknown): boolean {
+  const index = Number(value);
+  return index === index >>> 0 && value !== '';
 }
 
-function isObject(obj: any): boolean {
-  return obj === Object(obj);
+function isObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && (typeof value === 'object' || typeof value === 'function');
 }
 
-var identStart = '[\$_a-zA-Z]';
-var identPart = '[\$_a-zA-Z0-9]';
-var identRegExp = new RegExp('^' + identStart + '+' + identPart + '*' + '$');
+function getProperty(value: unknown, key: string): unknown {
+  return (Object(value) as Record<string, unknown>)[key];
+}
 
-function getPathCharType(char: string | undefined): string {
+function isArrayLike(value: unknown): value is ArrayLike<unknown> {
+  return value != null && isIndex(getProperty(value, 'length'));
+}
+
+const identRegExp = /^[$_a-zA-Z][$_a-zA-Z0-9]*$/;
+
+type PathCharType = 'eof' | '[' | ']' | '.' | '"' | "'" | '0' | 'ident' | 'ws' | 'number' | 'else';
+type ParserState = 'beforePath' | 'inPath' | 'beforeIdent' | 'inIdent' |
+  'beforeElement' | 'afterZero' | 'inIndex' | 'inSingleQuote' | 'inDoubleQuote' | 'afterElement';
+type Action = 'push' | 'append';
+type Transition = readonly [ParserState | 'afterPath' | 'error', Action?, string?];
+
+function getPathCharType(char: string | undefined): PathCharType {
   if (char === undefined) {
     return 'eof';
   }
+  if (char === '[' || char === ']' || char === '.' || char === '"' || char === "'" || char === '0') {
+    return char;
+  }
 
-  var code = char.charCodeAt(0);
+  const code = char.charCodeAt(0);
 
   switch (code) {
-    case 0x5B: // [
-    case 0x5D: // ]
-    case 0x2E: // .
-    case 0x22: // "
-    case 0x27: // '
-    case 0x30: // 0
-      return char;
-
     case 0x5F: // _
     case 0x24: // $
       return 'ident';
@@ -117,13 +121,7 @@ function getPathCharType(char: string | undefined): string {
   return 'else';
 }
 
-interface StateMachine {
-  [key: string]: {
-    [key: string]: string[];
-  };
-}
-
-var pathStateMachine: StateMachine = {
+const pathStateMachine: Record<ParserState, Partial<Record<PathCharType, Transition>>> = {
   'beforePath': {
     'ws': ['beforePath'],
     'ident': ['inIdent', 'append'],
@@ -191,15 +189,15 @@ var pathStateMachine: StateMachine = {
   }
 };
 
-function noop() { }
-
 function parsePath(path: string): string[] | undefined {
-  var keys: string[] = [];
-  var index = -1;
-  var c: string, newChar: string | undefined, key: string | undefined, type: string, transition: string[] | string, action: Function, typeMap: any, mode = 'beforePath';
+  const keys: string[] = [];
+  let index = -1;
+  let newChar: string | undefined;
+  let key: string | undefined;
+  let mode: ParserState = 'beforePath';
 
-  var actions: { [key: string]: Function } = {
-    push: function () {
+  const actions: Record<Action, () => void> = {
+    push() {
       if (key === undefined) {
         return;
       }
@@ -208,62 +206,40 @@ function parsePath(path: string): string[] | undefined {
       key = undefined;
     },
 
-    append: function () {
-      if (key === undefined) {
-        key = newChar;
-      } else {
-        key += newChar;
+    append() {
+      if (newChar !== undefined) {
+        key = (key ?? '') + newChar;
       }
     }
   };
 
-  function maybeUnescapeQuote() {
-    if (index >= path.length) {
-      return;
-    }
-
-    var nextChar = path[index + 1];
-    if ((mode == 'inSingleQuote' && nextChar == "'") ||
-      (mode == 'inDoubleQuote' && nextChar == '"')) {
-      index++;
-      newChar = nextChar;
-      actions['append']();
-      return true;
-    }
-  }
-
-  while (mode) {
+  while (true) {
     index++;
-    c = path[index];
-
-    if (c == '\\' && maybeUnescapeQuote()) {
+    const char = path[index];
+    const quote = mode === 'inSingleQuote' ? "'" : mode === 'inDoubleQuote' ? '"' : undefined;
+    if (char === '\\' && quote !== undefined && path[index + 1] === quote) {
+      index++;
+      newChar = quote;
+      actions.append();
       continue;
     }
 
-    type = getPathCharType(c);
-    typeMap = pathStateMachine[mode];
-    if (!typeMap) {
-      console.error('CRASH: typeMap undefined for mode:', mode, 'path:', path);
-      throw new Error('StateMachine crash');
-    }
-    // Cast strict lookup to avoid implicit specific string type inference interfering with 'error' literal
-    transition = (typeMap[type] as string[] | undefined) || typeMap['else'] || 'error';
-
-    if (transition === 'error' || (Array.isArray(transition) && transition[0] === 'error')) {
-      return; // parse error;
+    const typeMap: Partial<Record<PathCharType, Transition>> = pathStateMachine[mode];
+    const transition: Transition | undefined = typeMap[getPathCharType(char)] ?? typeMap.else;
+    if (!transition || transition[0] === 'error') {
+      return undefined;
     }
 
-    // Safety cast
-    var trans = transition as string[];
+    const [nextMode, action, replacement] = transition;
+    newChar = replacement ?? char;
+    if (action) {
+      actions[action]();
+    }
 
-    mode = trans[0];
-    action = actions[trans[1]] || noop;
-    newChar = trans[2] === undefined ? c : trans[2];
-    action();
-
-    if (mode === 'afterPath') {
+    if (nextMode === 'afterPath') {
       return keys;
     }
+    mode = nextMode;
   }
 }
 
@@ -271,19 +247,19 @@ function isIdent(s: string) {
   return identRegExp.test(s);
 }
 
-var constructorIsPrivate = {};
+const constructorIsPrivate = Symbol('Path constructor');
 
 class Path extends Array<string> {
-  valid: boolean = true;
+  valid = true;
 
-  constructor(parts: string[], privateToken: any) {
+  constructor(parts: readonly unknown[], privateToken: unknown) {
     if (privateToken !== constructorIsPrivate) {
       throw Error('Use Path.get to retrieve path objects');
     }
-    super(); // Initialize Array
+    super();
 
-    for (var i = 0; i < parts.length; i++) {
-      this.push(String(parts[i]));
+    for (const part of parts) {
+      this.push(String(part));
     }
     // Optimization: if eval is available, compile the getValueFrom function
     if (hasEval && this.length) {
@@ -291,61 +267,54 @@ class Path extends Array<string> {
     }
   }
 
-  static get(pathString?: string | Path | null | undefined | any[]): Path {
-    if (pathString instanceof Path) {
-      return pathString;
+  static override get [Symbol.species](): ArrayConstructor {
+    return Array;
+  }
+
+  static get(input?: unknown): Path {
+    if (input instanceof Path) {
+      return input;
     }
 
-    if (Array.isArray(pathString)) {
-      // Intentionally omitted loop to use cache? 
-      // No, original code fell through for arrays too, BUT only if they looked like strings?
-      // Original code: if (typeof != string) { if (isIndex(pathString.length)) { ... } }
-      // So arrays WERE handled by the cache logic logic.
-      // I should remove this explicit Array.isArray check to restore cache behavior for arrays too.
+    if (input == null || getProperty(input, 'length') === 0) {
+      input = '';
     }
 
-    if (pathString == null || (pathString as any).length === 0) {
-      pathString = '';
-    }
-
-    if (typeof pathString != 'string') {
-      if (isIndex((pathString as any).length)) {
-        // Constructed with array-like (pre-parsed) keys
-        var newPath = new Path(Array.from(pathString as any).map(String), constructorIsPrivate);
-        var newPathString = newPath.toString();
-        var cachedPath = pathCache[newPathString];
-        if (cachedPath) {
-          return cachedPath;
-        }
-        pathCache[newPathString] = newPath;
-        return newPath;
+    if (typeof input !== 'string' && isArrayLike(input)) {
+      const newPath = new Path(Array.from(input), constructorIsPrivate);
+      const newPathString = newPath.toString();
+      const cachedPath = pathCache.get(newPathString);
+      if (cachedPath) {
+        return cachedPath;
       }
-      pathString = String(pathString);
+      pathCache.set(newPathString, newPath);
+      return newPath;
     }
 
-    var path = pathCache[pathString];
+    const pathString = String(input);
+    let path = pathCache.get(pathString);
     if (path) {
       return path;
     }
 
-    var parts = parsePath(pathString);
+    const parts = parsePath(pathString);
     if (!parts) {
       return invalidPath;
     }
 
     path = new Path(parts, constructorIsPrivate);
-    pathCache[pathString] = path;
+    pathCache.set(pathString, path);
     return path;
   }
 
-  static getAll(...args: (string | Path | null | undefined | any[])[]): Path[] {
+  static getAll(...args: unknown[]): Path[] {
     return args.map(p => Path.get(p));
   }
 
   override toString(): string {
-    var pathString = '';
-    for (var i = 0; i < this.length; i++) {
-      var key = this[i];
+    let pathString = '';
+    for (let i = 0; i < this.length; i++) {
+      const key = this[i];
       if (isIdent(key)) {
         pathString += i ? '.' + key : key;
       } else {
@@ -355,22 +324,25 @@ class Path extends Array<string> {
     return pathString;
   }
 
-  getValueFrom(obj: any): any {
-    for (var i = 0; i < this.length; i++) {
+  getValueFrom(obj: unknown): any {
+    for (const key of this) {
       if (obj == null) {
         return;
       }
-      obj = obj[this[i]];
+      obj = getProperty(obj, key);
     }
     return obj;
   }
 
-  compiledGetValueFromFn(): (obj: any) => any {
-    var str = '';
-    var pathString = 'obj';
+  compiledGetValueFromFn(): (obj: unknown) => any {
+    if (!this.length) {
+      return obj => obj;
+    }
+    let str = '';
+    let pathString = 'obj';
     str += 'if (obj != null';
-    var i = 0;
-    var key;
+    let i = 0;
+    let key;
     for (; i < (this.length - 1); i++) {
       key = this[i];
       pathString += isIdent(key) ? '.' + key : formatCompiledAccessor(key);
@@ -382,15 +354,16 @@ class Path extends Array<string> {
     pathString += isIdent(key) ? '.' + key : formatCompiledAccessor(key);
 
     str += '  return ' + pathString + ';\nelse\n  return undefined;';
-    return new Function('obj', str) as (obj: any) => any;
+    return new Function('obj', str) as (obj: unknown) => any;
   }
 
-  setValueFrom(obj: any, value: any): boolean {
+  setValueFrom(obj: unknown, value: unknown): boolean {
     if (!this.length) {
       return false;
     }
 
-    for (var i = 0; i < this.length - 1; i++) {
+    let i = 0;
+    for (; i < this.length - 1; i++) {
       if (!isObject(obj)) {
         return false;
       }
@@ -406,9 +379,9 @@ class Path extends Array<string> {
   }
 }
 
-var pathCache: { [key: string]: Path } = {};
+const pathCache = new Map<string, Path>();
 
-var invalidPath = new Path([], constructorIsPrivate);
+const invalidPath = new Path([], constructorIsPrivate);
 invalidPath.valid = false;
 invalidPath.getValueFrom = function () { return undefined; };
 invalidPath.setValueFrom = function () { return false; };
