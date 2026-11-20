@@ -63,6 +63,11 @@ A path is an ECMAScript expression consisting only of identifiers (`myVal`), mem
 - When code generation is unavailable (for example, under a strict Content
   Security Policy), getters use ordinary property traversal.
 
+- Setters return `false` when the resolved assignment target is `Object.prototype`
+  or `Array.prototype`. Inherited traversal, custom prototypes, and
+  prototype-related key names remain supported. This is a targeted safeguard,
+  not comprehensive protection against every prototype-related mutation.
+
 ## TypeScript
 
 The package includes declarations and retains its CommonJS export:

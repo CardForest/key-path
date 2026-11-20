@@ -158,6 +158,60 @@ describe('key-path node module', function () {
     assert.equal(KeyPath.get('a').getValueFrom(undefined), undefined);
   });
 
+  it('rejects writes targeting Object.prototype or Array.prototype', function () {
+    const marker = '__keyPathPrototypeTest';
+    try {
+      for (const prototype of [Object.prototype, Array.prototype]) {
+        for (const input of [marker, [marker]]) {
+          assert.isFalse(KeyPath.get(input).setValueFrom(prototype, 42));
+        }
+        assert.isFalse(KeyPath.get(['alias', marker]).setValueFrom({ alias: prototype }, 42));
+        assert.isFalse(Object.prototype.hasOwnProperty.call(prototype, marker));
+      }
+
+      for (const object of [{}, []]) {
+        for (const input of [
+          `__proto__.${marker}`,
+          ['__proto__', marker],
+          `constructor.prototype.${marker}`,
+          ['constructor', 'prototype', marker],
+        ]) {
+          assert.isFalse(KeyPath.get(input).setValueFrom(object, 42));
+          assert.isFalse(Object.prototype.hasOwnProperty.call(Object.prototype, marker));
+          assert.isFalse(Object.prototype.hasOwnProperty.call(Array.prototype, marker));
+        }
+      }
+    } finally {
+      Reflect.deleteProperty(Object.prototype, marker);
+      Reflect.deleteProperty(Array.prototype, marker);
+    }
+  });
+
+  it('still sets inherited properties, custom prototypes, and prototype-related keys', function () {
+    const shared = { leaf: 1 };
+    const object = Object.create({ inherited: shared });
+    assert.isTrue(KeyPath.get('inherited.leaf').setValueFrom(object, 2));
+    assert.strictEqual(shared.leaf, 2);
+
+    const customPrototype = { leaf: 1 };
+    const instance = Object.create(customPrototype);
+    assert.isTrue(KeyPath.get('__proto__.leaf').setValueFrom(instance, 2));
+    assert.strictEqual(customPrototype.leaf, 2);
+
+    const data = { constructor: { prototype: { leaf: 1 } } };
+    assert.isTrue(KeyPath.get('constructor.prototype.leaf').setValueFrom(data, 2));
+    assert.strictEqual(data.constructor.prototype.leaf, 2);
+
+    const dictionary = Object.create(null);
+    assert.isTrue(KeyPath.get('__proto__').setValueFrom(dictionary, 42));
+    assert.strictEqual(dictionary.__proto__, 42);
+
+    const replacement = { leaf: 3 };
+    const ordinary = {};
+    assert.isTrue(KeyPath.get('__proto__').setValueFrom(ordinary, replacement));
+    assert.strictEqual(Object.getPrototypeOf(ordinary), replacement);
+  });
+
   it('Variadic Call', function () {
     var bar1 = KeyPath.get('foo.bar1');
     var bar2 = KeyPath.get('foo.bar2');

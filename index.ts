@@ -370,7 +370,7 @@ class Path extends Array<string> {
       obj = obj[this[i]];
     }
 
-    if (!isObject(obj)) {
+    if (obj === Object.prototype || obj === Array.prototype || !isObject(obj)) {
       return false;
     }
 
